@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Title Screen.unity
+    guid: cc2401fee0cfdf947b070e706e381b40
+  - enabled: 1
+    path: Assets/Scenes/islandddd.unity
+    guid: f38d64c574550eb4e87c85568a5be92b
+  - enabled: 1
+    path: Assets/Scenes/Death Screen.unity
+    guid: 5ed64b040824b3e43a550bcc3b2ab557
   m_configObjects: {}
