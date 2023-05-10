@@ -11866,7 +11866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b30acda35a735c748a5efa54f2158075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 150
+  maxHealth: 200
   currentHealth: 0
   healthBar: {fileID: 695109403}
 --- !u!1001 &696398521
@@ -32059,7 +32059,7 @@ GameObject:
   - component: {fileID: 1860907592}
   m_Layer: 0
   m_Name: death
-  m_TagString: Death
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33414,7 +33414,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9039141329206166041, guid: 967e6ee2769c28c489c4787704f5662d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.2553487
+      value: 6.97
       objectReference: {fileID: 0}
     - target: {fileID: 9039141329206166041, guid: 967e6ee2769c28c489c4787704f5662d, type: 3}
       propertyPath: m_LocalPosition.z

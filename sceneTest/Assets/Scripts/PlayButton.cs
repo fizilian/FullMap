@@ -12,5 +12,7 @@ public class PlayButton : MonoBehaviour
    public void retry()
    {
 		SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+		Cursor.visible = true;
+		Cursor.lockState = CursorLockMode.None;
    }
 }

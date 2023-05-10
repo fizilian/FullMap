@@ -48,7 +48,7 @@ public class PlayerHealth : MonoBehaviour
         }*/
          if(Col.gameObject.tag == "Enemy")
         {
-            Debug.Log("Touching Enemey, move away | -10 HP ");
+            Debug.Log("Touching Enemy, move away | -10 HP ");
             takeDamage(10);
             healthBar.setHealth(currentHealth);
         }
