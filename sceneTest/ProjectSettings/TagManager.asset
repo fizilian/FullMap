@@ -9,6 +9,8 @@ TagManager:
   - Bomb
   - Death
   - Enemy
+  - Water
+  - Win
   layers:
   - Default
   - TransparentFX

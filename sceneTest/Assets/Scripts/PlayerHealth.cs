@@ -52,6 +52,12 @@ public class PlayerHealth : MonoBehaviour
             takeDamage(10);
             healthBar.setHealth(currentHealth);
         }
+         if(Col.gameObject.tag == "Water")
+        {
+            Debug.Log("Touching Water, swim. | -50 HP ");
+            takeDamage(50);
+            healthBar.setHealth(currentHealth);
+        }
     }
 
 }

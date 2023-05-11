@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class CoinScript : MonoBehaviour {
 
@@ -19,6 +20,13 @@ public class CoinScript : MonoBehaviour {
 			Col.gameObject.SetActive(false);
 			Destroy(Col.gameObject);
 			coinSound.Play();
+		}
+		if(Col.gameObject.tag == "Win")
+		{
+			if(coins >= 25)
+			{
+				SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 2);
+			}
 		}
 	}
 	void Update()
