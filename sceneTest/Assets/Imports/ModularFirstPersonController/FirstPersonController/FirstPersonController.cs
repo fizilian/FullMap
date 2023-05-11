@@ -17,6 +17,15 @@ using UnityEngine.UI;
 public class FirstPersonController : MonoBehaviour
 {
     private Rigidbody rb;
+    public int defSpeed;
+    public float Speed;
+    public float jumpForce;
+    public float gravity;
+    private bool canDoubleJump;
+    public bool isDashing;
+    public float dashSpeed;
+    public int numOfDashes;
+    private bool cooldown = false;
 
     #region Camera Movement Variables
 
@@ -96,7 +105,6 @@ public class FirstPersonController : MonoBehaviour
 
     public bool enableJump = true;
     public KeyCode jumpKey = KeyCode.Space;
-    public float jumpPower = 5f;
 
     // Internal Variables
     private bool isGrounded = false;
@@ -196,6 +204,9 @@ public class FirstPersonController : MonoBehaviour
         }
 
         #endregion
+
+        dashSpeed = 10;
+        jumpForce = 7;
     }
 
     float camRotation;
@@ -330,31 +341,14 @@ public class FirstPersonController : MonoBehaviour
         {
             Jump();
         }
-
-        #endregion
-
-        #region Crouch
-
-        if (enableCrouch)
+        if (enableJump && canDoubleJump == true && !isGrounded && Input.GetKeyDown(jumpKey))
         {
-            if(Input.GetKeyDown(crouchKey) && !holdToCrouch)
-            {
-                Crouch();
-            }
-            
-            if(Input.GetKeyDown(crouchKey) && holdToCrouch)
-            {
-                isCrouched = false;
-                Crouch();
-            }
-            else if(Input.GetKeyUp(crouchKey) && holdToCrouch)
-            {
-                isCrouched = true;
-                Crouch();
-            }
+            doubleJump();
         }
 
         #endregion
+
+
 
         CheckGround();
 
@@ -362,9 +356,28 @@ public class FirstPersonController : MonoBehaviour
         {
             HeadBob();
         }
+
+        if (!cooldown)
+        {
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                StartCoroutine(Dash());
+                cooldown = true;
+            }
+        }
+        else
+        {
+            Invoke("dashCD", 0.3f);
+        }
+
+        if (isGrounded && numOfDashes == 0)
+        {
+            Invoke("resetDashes", 0.5f);
+        }
+
     }
 
-    void FixedUpdate()
+void FixedUpdate()
     {
         #region Movement
 
@@ -402,10 +415,6 @@ public class FirstPersonController : MonoBehaviour
                 {
                     isSprinting = true;
 
-                    if (isCrouched)
-                    {
-                        Crouch();
-                    }
 
                     if (hideBarWhenFull && !unlimitedSprint)
                     {
@@ -461,40 +470,13 @@ public class FirstPersonController : MonoBehaviour
 
     private void Jump()
     {
-        // Adds force to the player rigidbody to jump
-        if (isGrounded)
-        {
-            rb.AddForce(0f, jumpPower, 0f, ForceMode.Impulse);
-            isGrounded = false;
-        }
-
-        // When crouched and using toggle system, will uncrouch for a jump
-        if(isCrouched && !holdToCrouch)
-        {
-            Crouch();
-        }
+        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        canDoubleJump = true;
     }
-
-    private void Crouch()
+    private void doubleJump()
     {
-        // Stands player up to full height
-        // Brings walkSpeed back up to original speed
-        if(isCrouched)
-        {
-            transform.localScale = new Vector3(originalScale.x, originalScale.y, originalScale.z);
-            walkSpeed /= speedReduction;
-
-            isCrouched = false;
-        }
-        // Crouches player down to set height
-        // Reduces walkSpeed
-        else
-        {
-            transform.localScale = new Vector3(originalScale.x, crouchHeight, originalScale.z);
-            walkSpeed *= speedReduction;
-
-            isCrouched = true;
-        }
+        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        canDoubleJump = false;
     }
 
     private void HeadBob()
@@ -505,11 +487,6 @@ public class FirstPersonController : MonoBehaviour
             if(isSprinting)
             {
                 timer += Time.deltaTime * (bobSpeed + sprintSpeed);
-            }
-            // Calculates HeadBob speed during crouched movement
-            else if (isCrouched)
-            {
-                timer += Time.deltaTime * (bobSpeed * speedReduction);
             }
             // Calculates HeadBob speed during walking
             else
@@ -526,7 +503,73 @@ public class FirstPersonController : MonoBehaviour
             joint.localPosition = new Vector3(Mathf.Lerp(joint.localPosition.x, jointOriginalPos.x, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.y, jointOriginalPos.y, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.z, jointOriginalPos.z, Time.deltaTime * bobSpeed));
         }
     }
+    void resetDashes()
+    {
+        numOfDashes = 2;
+    }
+
+    void dashCD()
+    {
+        cooldown = false;
+    }
+
+    IEnumerator Dash()
+    {
+        Vector3 targetVelocity = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        Vector3 velocity = rb.velocity;
+        Vector3 velocityChange = (targetVelocity - velocity);
+        velocityChange.x = Mathf.Clamp(velocityChange.x, -maxVelocityChange, maxVelocityChange);
+        velocityChange.z = Mathf.Clamp(velocityChange.z, -maxVelocityChange, maxVelocityChange);
+        velocityChange.y = 0;
+        isDashing = true;
+        if (numOfDashes > 0)
+        {
+            int defGrav = 5000;
+            int tempGrav = 0;
+            if (isDashing && Input.GetKey(KeyCode.W))
+            {
+                rb.AddForce(-velocityChange * dashSpeed, ForceMode.VelocityChange);
+                gravity = tempGrav;
+                numOfDashes -= 1;
+                yield return new WaitForSeconds(0.3f);
+                gravity = defGrav;
+                rb.velocity = new Vector3(0, 0, 0);
+                isDashing = false;
+            }
+            if (isDashing && Input.GetKey(KeyCode.A))
+            {
+                rb.AddForce(-velocityChange * dashSpeed, ForceMode.VelocityChange);
+                gravity = tempGrav;
+                numOfDashes -= 1;
+                yield return new WaitForSeconds(0.3f);
+                gravity = defGrav;
+                rb.velocity = new Vector3(0, 0, 0);
+                isDashing = false;
+            }
+            if (isDashing && Input.GetKey(KeyCode.S))
+            {
+                rb.AddForce(-velocityChange * dashSpeed, ForceMode.VelocityChange);
+                gravity = tempGrav;
+                numOfDashes -= 1;
+                yield return new WaitForSeconds(0.3f);
+                gravity = defGrav;
+                rb.velocity = new Vector3(0, 0, 0);
+                isDashing = false;
+            }
+            if (isDashing && Input.GetKey(KeyCode.D))
+            {
+                rb.AddForce(-velocityChange * dashSpeed, ForceMode.VelocityChange);
+                gravity = tempGrav;
+                numOfDashes -= 1;
+                yield return new WaitForSeconds(0.3f);
+                gravity = defGrav;
+                rb.velocity = new Vector3(0, 0, 0);
+                isDashing = false;
+            }
+        }
+    }
 }
+
 
 
 
@@ -554,7 +597,7 @@ public class FirstPersonController : MonoBehaviour
         GUILayout.Label("version 1.0.1", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Normal, fontSize = 12 });
         EditorGUILayout.Space();
 
-        #region Camera Setup
+#region Camera Setup
 
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         GUILayout.Label("Camera Setup", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
@@ -591,7 +634,7 @@ public class FirstPersonController : MonoBehaviour
 
         EditorGUILayout.Space();
 
-        #region Camera Zoom Setup
+#region Camera Zoom Setup
 
         GUILayout.Label("Zoom", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
 
@@ -604,11 +647,11 @@ public class FirstPersonController : MonoBehaviour
         fpc.zoomStepTime = EditorGUILayout.Slider(new GUIContent("Step Time", "Determines how fast the FOV transitions while zooming in."), fpc.zoomStepTime, .1f, 10f);
         GUI.enabled = true;
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Movement Setup
+#region Movement Setup
 
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         GUILayout.Label("Movement Setup", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
@@ -622,7 +665,7 @@ public class FirstPersonController : MonoBehaviour
 
         EditorGUILayout.Space();
 
-        #region Sprint
+#region Sprint
 
         GUILayout.Label("Sprint", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
 
@@ -676,9 +719,9 @@ public class FirstPersonController : MonoBehaviour
 
         EditorGUILayout.Space();
 
-        #endregion
+#endregion
 
-        #region Jump
+#region Jump
 
         GUILayout.Label("Jump", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
 
@@ -686,14 +729,14 @@ public class FirstPersonController : MonoBehaviour
 
         GUI.enabled = fpc.enableJump;
         fpc.jumpKey = (KeyCode)EditorGUILayout.EnumPopup(new GUIContent("Jump Key", "Determines what key is used to jump."), fpc.jumpKey);
-        fpc.jumpPower = EditorGUILayout.Slider(new GUIContent("Jump Power", "Determines how high the player will jump."), fpc.jumpPower, .1f, 20f);
+       
         GUI.enabled = true;
 
         EditorGUILayout.Space();
 
-        #endregion
+#endregion
 
-        #region Crouch
+#region Crouch
 
         GUILayout.Label("Crouch", new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold, fontSize = 13 }, GUILayout.ExpandWidth(true));
 
@@ -706,11 +749,11 @@ public class FirstPersonController : MonoBehaviour
         fpc.speedReduction = EditorGUILayout.Slider(new GUIContent("Speed Reduction", "Determines the percent 'Walk Speed' is reduced by. 1 being no reduction, and .5 being half."), fpc.speedReduction, .1f, 1);
         GUI.enabled = true;
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Head Bob
+#region Head Bob
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
@@ -726,7 +769,7 @@ public class FirstPersonController : MonoBehaviour
         fpc.bobAmount = EditorGUILayout.Vector3Field(new GUIContent("Bob Amount", "Determines the amount the joint moves in both directions on every axes."), fpc.bobAmount);
         GUI.enabled = true;
 
-        #endregion
+#endregion
 
         //Sets any changes from the prefab
         if(GUI.changed)
