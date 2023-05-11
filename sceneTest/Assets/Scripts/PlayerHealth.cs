@@ -48,13 +48,13 @@ public class PlayerHealth : MonoBehaviour
         }*/
          if(Col.gameObject.tag == "Enemy")
         {
-            Debug.Log("Touching Enemy, move away | -10 HP ");
+            Debug.Log("Touching Enemy, Spikes hurt, move away | -10 HP ");
             takeDamage(10);
             healthBar.setHealth(currentHealth);
         }
          if(Col.gameObject.tag == "Water")
         {
-            Debug.Log("Touching Water, swim. | -50 HP ");
+            Debug.Log("Touching Water, swim up. | -50 HP ");
             takeDamage(50);
             healthBar.setHealth(currentHealth);
         }
